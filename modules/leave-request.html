@@ -1,0 +1,142 @@
+<!-- Ledighetsansökan - Modul -->
+
+<div class="control-panel" style="margin-bottom: 20px;">
+    <h2 style="margin: 0; color: #2C3E50;">📝 Ledighetsansökan</h2>
+</div>
+
+<!-- Ansökningsformulär -->
+<div class="panel">
+    <h2 class="panel-title">Ansök om ledighet</h2>
+    
+    <form id="leave-request-form" onsubmit="return submitLeaveRequest(event)">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="leave-type">Typ av ledighet: *</label>
+                <select id="leave-type" required>
+                    <option value="">— Välj typ —</option>
+                    <option value="Semester">Semester</option>
+                    <option value="ATK">ATK (Arbetstidsförkortning)</option>
+                    <option value="Komp">Komp (Komptid)</option>
+                    <option value="VAB">VAB (Vård av barn)</option>
+                    <option value="Tjänstledig">Tjänstledig</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="leave-from-date">Från datum: *</label>
+                <input type="date" id="leave-from-date" required onchange="calculateLeaveDays()">
+            </div>
+            
+            <div class="form-group">
+                <label for="leave-to-date">Till datum: *</label>
+                <input type="date" id="leave-to-date" required onchange="calculateLeaveDays()">
+            </div>
+        </div>
+        
+        <!-- Beräknad information -->
+        <div id="leave-calculation" style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none;">
+            <strong style="color: #0d47a1;">ℹ️ Beräknat:</strong>
+            <span id="leave-days-text" style="margin-left: 10px; font-size: 16px;"></span>
+        </div>
+        
+        <div class="form-group">
+            <label for="leave-comment">Kommentar (valfritt):</label>
+            <textarea id="leave-comment" rows="3" placeholder="Frivillig kommentar..."></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary">📤 Skicka ansökan</button>
+            <button type="button" class="btn btn-secondary" onclick="resetLeaveForm()">Rensa formulär</button>
+        </div>
+    </form>
+</div>
+
+<!-- Mina ansökningar -->
+<div class="panel">
+    <h2 class="panel-title">Mina ledighetsansökningar</h2>
+    
+    <div class="table-wrapper">
+        <table id="my-leave-requests-table">
+            <thead>
+                <tr>
+                    <th>Typ</th>
+                    <th>Från</th>
+                    <th>Till</th>
+                    <th>Dagar</th>
+                    <th>Timmar</th>
+                    <th>Status</th>
+                    <th>Ansökt</th>
+                    <th>Kommentar</th>
+                    <th>Åtgärd</th>
+                </tr>
+            </thead>
+            <tbody id="my-leave-requests-body">
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #666;">
+                        Laddar dina ansökningar...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Admin-sektion: Hantera alla ansökningar (bara synlig för Admin/Kontrollant) -->
+<div id="admin-leave-section" class="panel" style="display: none;">
+    <h2 class="panel-title" style="border-bottom-color: #e74c3c;">🔒 Hantera ledighetsansökningar (Admin)</h2>
+    
+    <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-info" onclick="filterLeaveRequests('all')">Alla ansökningar</button>
+        <button class="btn btn-warning" onclick="filterLeaveRequests('pending')">⏳ Väntande</button>
+        <button class="btn btn-success" onclick="filterLeaveRequests('approved')">✅ Godkända</button>
+        <button class="btn btn-danger" onclick="filterLeaveRequests('denied')">❌ Nekade</button>
+    </div>
+    
+    <div class="table-wrapper">
+        <table id="all-leave-requests-table">
+            <thead>
+                <tr>
+                    <th>Användare</th>
+                    <th>Skiftlag</th>
+                    <th>Typ</th>
+                    <th>Från</th>
+                    <th>Till</th>
+                    <th>Dagar</th>
+                    <th>Timmar</th>
+                    <th>Status</th>
+                    <th>Ansökt</th>
+                    <th>Kommentar</th>
+                    <th>Åtgärder</th>
+                </tr>
+            </thead>
+            <tbody id="all-leave-requests-body">
+                <tr>
+                    <td colspan="11" style="text-align: center; padding: 40px; color: #666;">
+                        Laddar alla ansökningar...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Dialog för att neka ansökan med kommentar -->
+<div id="deny-leave-dialog" class="dialog-overlay">
+    <div class="dialog-content">
+        <h2 class="dialog-title">❌ Neka ledighetsansökan</h2>
+        
+        <p style="margin-bottom: 15px;">Ange orsak till varför ansökan nekas:</p>
+        
+        <div class="form-group">
+            <label for="deny-reason">Orsak:</label>
+            <textarea id="deny-reason" rows="4" placeholder="Förklara varför ansökan nekas..." required></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-danger" onclick="confirmDenyLeave()">Neka ansökan</button>
+            <button class="btn btn-secondary" onclick="closeDenyDialog()">Avbryt</button>
+        </div>
+    </div>
+</div>

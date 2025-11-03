@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal - Nordic Barrier Coating AB</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Login-sida -->
+    <div id="login-page" class="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <img src="img/logo.png" alt="Nordic Barrier Coating AB">
+                <h1>Portal</h1>
+                <p>Logga in för att fortsätta</p>
+            </div>
+            <div class="login-body">
+                <div id="login-error" class="error-message"></div>
+                <form id="login-form" onsubmit="return handleLogin(event)">
+                    <div class="form-group">
+                        <label for="username">Användarnamn</label>
+                        <select id="username" required>
+                            <option value="">— Välj användare —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Lösenord</label>
+                        <input type="password" id="password" required autocomplete="current-password" autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Logga in</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Huvudapp -->
+    <div id="app-page" class="app-page">
+        <div class="header">
+            <div class="header-content">
+                <img src="img/logo.png" alt="Nordic Barrier Coating AB">
+                <div class="user-info">
+                    <strong id="user-name">Ej inloggad</strong>
+                    <div id="user-details"></div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="handleLogout()">Logga ut</button>
+            </div>
+        </div>
+        
+        <!-- Banner för redigering av annan användare -->
+        <div id="edit-user-banner" class="edit-user-banner">
+            <div>
+                <strong>⚠️ Du redigerar nu: <span id="editing-user-name"></span></strong>
+            </div>
+            <button class="btn btn-danger" style="padding: 6px 15px;" onclick="cancelEditUser()">Avsluta redigering</button>
+        </div>
+        
+        <!-- Flikar -->
+        <div class="tabs">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('report')">Månadsrapport</button>
+                <button class="tab-button" onclick="switchTab('stats')">Statistik</button>
+                <button class="tab-button" onclick="switchTab('leave')">Ledighet</button>
+                <button id="tab-admin" class="tab-button admin-tab" onclick="switchToAdmin()" style="display: none;">Admin</button>
+                <button id="tab-overview" class="tab-button admin-tab" onclick="switchTab('overview')" style="display: none;">Rapporter</button>
+                <button id="tab-company-stats" class="tab-button admin-tab" onclick="switchTab('company-stats')" style="display: none;">Företagsstatistik</button>
+            </div>
+        </div>
+        
+        <div class="container">
+            <div id="alert-success" class="alert alert-success"></div>
+            <div id="alert-error" class="alert alert-error"></div>
+            
+            <!-- Flik: Månadsrapport -->
+            <div id="tab-content-report" class="tab-content active">
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label for="report-year">År:</label>
+                        <input type="number" id="report-year" min="2020" max="2100" style="width: 100px;" onchange="loadSchedule()">
+                        
+                        <label for="report-month" style="margin-left: 15px;">Månad:</label>
+                        <select id="report-month" style="width: 150px;" onchange="loadSchedule()">
+                            <option value="1">Januari</option>
+                            <option value="2">Februari</option>
+                            <option value="3">Mars</option>
+                            <option value="4">April</option>
+                            <option value="5">Maj</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">Augusti</option>
+                            <option value="9">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="show-empty" onchange="loadSchedule()">
+                            Visa alla dagar
+                        </label>
+                        
+                        <button class="btn btn-success" onclick="saveReport()" style="margin-left: 15px;">Spara rapport</button>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Schema</h2>
+                    <div class="table-wrapper">
+                        <table id="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>Veckodag</th>
+                                    <th>Skift</th>
+                                    <th>Arbetade h</th>
+                                    <th>Orsak</th>
+                                    <th>Frånvaro h</th>
+                                    <th>Ledighet h</th>
+                                    <th>Mertid</th>
+                                    <th>OT 50%</th>
+                                    <th>OT 100%</th>
+                                    <th>OT 200%</th>
+                                    <th>Övrigt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-body">
+                                <tr>
+                                    <td colspan="12" style="text-align: center; padding: 40px; color: #666;">
+                                        Laddar schema...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="summary-panel" id="summary-panel" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">Sammanfattning</h3>
+                    <div class="summary-grid">
+                        <div class="summary-box">
+                            <div class="summary-label">Arbetade timmar</div>
+                            <div class="summary-value" id="sum-worked">0</div>
+                        </div>
+                        <div class="summary-box">
+                            <div class="summary-label">Frånvaro</div>
+                            <div class="summary-value" id="sum-absence">0</div>
+                        </div>
+                        <div class="summary-box">
+                            <div class="summary-label">Ledighet</div>
+                            <div class="summary-value" id="sum-leave">0</div>
+                        </div>
+                        <div class="summary-box">
+                            <div class="summary-label">Mertid</div>
+                            <div class="summary-value" id="sum-mertid">0</div>
+                        </div>
+                        <div class="summary-box">
+                            <div class="summary-label">Övertid 50%</div>
+                            <div class="summary-value" id="sum-ot50">0</div>
+                        </div>
+                        <div class="summary-box">
+                            <div class="summary-label">Övertid 100%</div>
+                            <div class="summary-value" id="sum-ot100">0</div>
+                        </div>
+                        <div class="summary-box">
+                            <div class="summary-label">Övertid 200%</div>
+                            <div class="summary-value" id="sum-ot200">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Flik: Statistik -->
+            <div id="tab-content-stats" class="tab-content">
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label for="stats-year">Visa statistik för år:</label>
+                        <input type="number" id="stats-year" min="2020" max="2100" style="width: 100px;" onchange="loadStatistics()">
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Sammanfattning</h2>
+                    <div id="stats-summary">
+                        <p style="color: #666;">Laddar statistik...</p>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Frånvarostatistik per månad</h2>
+                    <div class="table-wrapper">
+                        <table id="stats-absence-table">
+                            <thead>
+                                <tr>
+                                    <th>Månad</th>
+                                    <th>Sjuk</th>
+                                    <th>Semester</th>
+                                    <th>VAB</th>
+                                    <th>Tjänstledig</th>
+                                    <th>Övrig frånvaro</th>
+                                    <th>ATK</th>
+                                    <th>Komp</th>
+                                    <th>Totalt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-absence-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Övertidsstatistik per månad</h2>
+                    <div class="table-wrapper">
+                        <table id="stats-overtime-table">
+                            <thead>
+                                <tr>
+                                    <th>Månad</th>
+                                    <th>Mertid</th>
+                                    <th>OT 50%</th>
+                                    <th>OT 100%</th>
+                                    <th>OT 200%</th>
+                                    <th>Totalt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-overtime-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Flik: Ledighet (laddas dynamiskt) -->
+            <div id="tab-content-leave" class="tab-content">
+                <p style="text-align: center; padding: 40px; color: #666;">Laddar ledighetsmodul...</p>
+            </div>
+            
+            <!-- Flik: Översikt (Admin/Kontrollant) -->
+            <div id="tab-content-overview" class="tab-content">
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label for="overview-year">År:</label>
+                        <input type="number" id="overview-year" min="2020" max="2100" style="width: 100px;" onchange="loadOverview()">
+                        
+                        <label for="overview-month" style="margin-left: 15px;">Månad:</label>
+                        <select id="overview-month" style="width: 150px;" onchange="loadOverview()">
+                            <option value="1">Januari</option>
+                            <option value="2">Februari</option>
+                            <option value="3">Mars</option>
+                            <option value="4">April</option>
+                            <option value="5">Maj</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">Augusti</option>
+                            <option value="9">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Rapporter</h2>
+                    <div class="table-wrapper">
+                        <table id="overview-table">
+                            <thead>
+                                <tr>
+                                    <th>Användare</th>
+                                    <th>Skiftlag</th>
+                                    <th>Arbetade h</th>
+                                    <th>Frånvaro</th>
+                                    <th>Ledighet</th>
+                                    <th>Mertid</th>
+                                    <th>OT 50%</th>
+                                    <th>OT 100%</th>
+                                    <th>OT 200%</th>
+                                    <th>Status</th>
+                                    <th>Åtgärder</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overview-body">
+                                <tr>
+                                    <td colspan="11" style="text-align: center; padding: 40px; color: #666;">
+                                        Laddar rapporter...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Flik: Företagsstatistik (endast Admin) -->
+            <div id="tab-content-company-stats" class="tab-content">
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label for="company-stats-year">År:</label>
+                        <input type="number" id="company-stats-year" min="2020" max="2100" style="width: 100px;" onchange="loadCompanyStatistics()">
+                        
+                        <label for="company-stats-month" style="margin-left: 15px;">Månad:</label>
+                        <select id="company-stats-month" style="width: 150px;" onchange="loadCompanyStatistics()">
+                            <option value="0">Hela året</option>
+                            <option value="1">Januari</option>
+                            <option value="2">Februari</option>
+                            <option value="3">Mars</option>
+                            <option value="4">April</option>
+                            <option value="5">Maj</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">Augusti</option>
+                            <option value="9">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Översikt alla användare -->
+                <div class="stats-card">
+                    <h3 class="stats-card-title">📊 Företagsöversikt</h3>
+                    <div class="stats-grid" id="company-overview-stats">
+                        <p style="color: #666;">Laddar statistik...</p>
+                    </div>
+                </div>
+                
+                <!-- Per skiftlag -->
+                <div class="stats-card">
+                    <h3 class="stats-card-title">👥 Statistik per skiftlag</h3>
+                    <div id="team-stats-container">
+                        <p style="color: #666;">Laddar statistik...</p>
+                    </div>
+                </div>
+                
+                <!-- Top listor -->
+                <div class="stats-card">
+                    <h3 class="stats-card-title">🏆 Toplistor</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <div>
+                            <h4 style="margin-bottom: 10px; color: #28a745;">Mest arbetade timmar</h4>
+                            <div id="top-worked-hours">
+                                <p style="color: #666;">Laddar...</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 10px; color: #ffc107;">Mest frånvaro</h4>
+                            <div id="top-absence">
+                                <p style="color: #666;">Laddar...</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 10px; color: #17a2b8;">Mest övertid</h4>
+                            <div id="top-overtime">
+                                <p style="color: #666;">Laddar...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Detaljerad användarlista -->
+                <div class="panel">
+                    <h2 class="panel-title">Detaljerad översikt alla användare</h2>
+                    <div class="table-wrapper">
+                        <table id="company-users-table">
+                            <thead>
+                                <tr>
+                                    <th>Användare</th>
+                                    <th>Skiftlag</th>
+                                    <th>Arbetade h</th>
+                                    <th>Frånvaro h</th>
+                                    <th>Ledighet h</th>
+                                    <th>Total Övertid</th>
+                                    <th>Sjuk %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="company-users-body">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                                        Laddar data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Flik: Admin (endast för Admin) -->
+            <div id="tab-content-admin" class="tab-content">
+                <div class="panel">
+                    <h2 class="panel-title">Användarhantering</h2>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-success" onclick="showCreateUserDialog()">Skapa ny användare</button>
+                    </div>
+                    
+                    <div class="table-wrapper">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Namn</th>
+                                    <th>Skiftlag</th>
+                                    <th>Roll</th>
+                                    <th>Status</th>
+                                    <th>Åtgärder</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                                        Laddar användare...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Skiftlagsnamn</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="admin-team-a-name">Skiftlag A:</label>
+                            <input type="text" id="admin-team-a-name" placeholder="t.ex. Skiftlag 1">
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-team-b-name">Skiftlag B:</label>
+                            <input type="text" id="admin-team-b-name" placeholder="t.ex. Skiftlag 2">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="admin-team-c-name">Skiftlag C:</label>
+                            <input type="text" id="admin-team-c-name" placeholder="t.ex. Skiftlag 3">
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-team-d-name">Dagtid/Skiftlag D:</label>
+                            <input type="text" id="admin-team-d-name" placeholder="t.ex. Dagtid">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="saveTeamNames()">Spara skiftlagsnamn</button>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Skiftinställningar</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="admin-start-date">Rotationsstart (första måndagen):</label>
+                            <input type="date" id="admin-start-date">
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-top: 20px; margin-bottom: 10px;">Startdatum för skiftlagsschema:</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="admin-anchor-a">Skiftlag 1 (A):</label>
+                            <input type="date" id="admin-anchor-a">
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-anchor-b">Skiftlag 2 (B):</label>
+                            <input type="date" id="admin-anchor-b">
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-anchor-c">Skiftlag 3 (C):</label>
+                            <input type="date" id="admin-anchor-c">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="saveSettings()">Spara inställningar</button>
+                </div>
+                
+                <div class="panel">
+                    <h2 class="panel-title">Vanliga fraser för anteckningar</h2>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="new-phrase">Ny fras:</label>
+                                <input type="text" id="new-phrase" placeholder="Skriv en vanlig fras...">
+                            </div>
+                            <div style="display: flex; align-items: flex-end;">
+                                <button class="btn btn-success" onclick="addPhrase()">Lägg till</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="phrases-list" style="display: grid; gap: 10px;">
+                        <p style="color: #666;">Inga fraser än. Lägg till din första fras ovan.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dialog för att skapa/redigera användare -->
+    <div id="user-dialog" class="dialog-overlay">
+        <div class="dialog-content">
+            <h2 class="dialog-title" id="user-dialog-title">Skapa användare</h2>
+            
+            <div class="form-group">
+                <label for="dialog-user-name">Namn:</label>
+                <input type="text" id="dialog-user-name">
+            </div>
+            
+            <div class="form-group">
+                <label for="dialog-user-team">Skiftlag:</label>
+                <select id="dialog-user-team">
+                    <option value="A">Skiftlag 1 (A)</option>
+                    <option value="B">Skiftlag 2 (B)</option>
+                    <option value="C">Skiftlag 3 (C)</option>
+                    <option value="D">Dagtid (D)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="dialog-user-role">Roll:</label>
+                <select id="dialog-user-role">
+                    <option value="Användare">Användare</option>
+                    <option value="Kontrollant">Kontrollant</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="dialog-user-password">Lösenord:</label>
+                <input type="password" id="dialog-user-password">
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="dialog-user-hidden">
+                    Dold användare (syns inte i listor)
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" onclick="saveUser()">Spara</button>
+                <button class="btn btn-secondary" onclick="closeUserDialog()">Avbryt</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="modules/leave-request.js"></script>
+</body>
+</html>
